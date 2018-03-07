@@ -166,7 +166,11 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
         layoutManager.drawBackground(forGlyphRange: range, at: newOrigin)
         layoutManager.drawGlyphs(forGlyphRange: range, at: newOrigin)
     }
-
+    
+    open func handleHashtagString(handler: @escaping ([String]) -> ())
+    {
+        hashtagStringHandler = handler
+    }
 
     // MARK: - customzation
     @discardableResult
@@ -239,6 +243,7 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
     internal var hashtagTapHandler: ((String) -> ())?
     internal var urlTapHandler: ((URL) -> ())?
     internal var customTapHandlers: [ActiveType : ((String) -> ())] = [:]
+    fileprivate var hashtagStringHandler: (([String]) -> ())?
     
     fileprivate var mentionFilterPredicate: ((String) -> Bool)?
     fileprivate var hashtagFilterPredicate: ((String) -> Bool)?
@@ -248,8 +253,28 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
     internal lazy var textStorage = NSTextStorage()
     fileprivate lazy var layoutManager = NSLayoutManager()
     fileprivate lazy var textContainer = NSTextContainer()
-    lazy var activeElements = [ActiveType: [ElementTuple]]()
-
+    var activeElements = [ActiveType: [ElementTuple]]() {
+        didSet { activeElementDidSet() } }
+    
+    private func activeElementDidSet()
+    {
+        if let hashtagActiveElementes = activeElements[.hashtag]
+        {
+            let elements = hashtagActiveElementes.map { $0.element }
+            var results = [String]()
+            
+            for element in elements
+            {
+                if case .hashtag(let hashtag) = element
+                {
+                    results.append(hashtag)
+                }
+            }
+            
+            hashtagStringHandler?(results)
+        }
+    }
+    
     // MARK: - helper functions
     
     fileprivate func setupLabel() {
@@ -360,6 +385,7 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
             }
             let hashtagElements = ActiveBuilder.createElements(type: type, from: textString, range: textRange, filterPredicate: filter)
             activeElements[type] = hashtagElements
+            
         }
 
         return textString
