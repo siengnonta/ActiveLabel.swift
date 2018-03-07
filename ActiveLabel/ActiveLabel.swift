@@ -167,7 +167,7 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
         layoutManager.drawGlyphs(forGlyphRange: range, at: newOrigin)
     }
     
-    open func handleHashtagString(handler: @escaping ([String]) -> ())
+    open func handleHashtagString(_ handler: @escaping ([String]) -> ())
     {
         hashtagStringHandler = handler
     }
@@ -271,7 +271,10 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
                 }
             }
             
-            hashtagStringHandler?(results)
+            if results.isEmpty == false
+            {
+                hashtagStringHandler?(results)
+            }
         }
     }
     
